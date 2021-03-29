@@ -1,0 +1,14 @@
+root: true
+extends:
+  - '@white-matrix/eslint-config-ts'
+  - 'plugin:@typescript-eslint/recommended-requiring-type-checking'
+parserOptions:
+  project: tsconfig.json
+rules:
+  'import/extensions':
+    - 0
+    - ts: 0
+      js: 2
+      json: 2
+  no-shadow: 0
+  no-underscore-dangle: 0

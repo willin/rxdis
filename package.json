@@ -1,0 +1,60 @@
+{
+  "name": "rxedis",
+  "version": "0.0.1",
+  "description": "RxJS wrapper for redis",
+  "main": "dist/index.js",
+  "module": "src/index.ts",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "lint": "eslint \"{src,test}/**/*.ts\" --fix",
+    "prepare": "npm run build",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage"
+  },
+  "peerDependencies": {
+    "rxjs": "^7.0.0-beta.13"
+  },
+  "devDependencies": {
+    "@types/node": "^14.14.37",
+    "@white-matrix/eslint-config-ts": "^0.0.6",
+    "eslint": "^7.23.0",
+    "eslint-plugin-import": "^2.22.1",
+    "husky": "^5.2.0",
+    "lint-staged": "^10.5.4",
+    "prettier": "^2.2.1",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.3"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.[jt]s": [
+      "prettier --write",
+      "eslint --fix"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/willin/rxdis.git"
+  },
+  "keywords": [
+    "rx",
+    "rxjs",
+    "redis",
+    "node-redis",
+    "typescript-redis",
+    "ioredis",
+    "rxredis"
+  ],
+  "author": "Willin Wang <willin@willin.org> (https://github.com/willin)",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/willin/rxdis/issues"
+  },
+  "homepage": "https://github.com/willin/rxdis#readme"
+}
