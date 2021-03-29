@@ -1,4 +1,4 @@
-# Rxdix
+# Rxdis
 
 RxJS wrapper for Redis
 

@@ -1,5 +1,5 @@
 {
-  "name": "rxedis",
+  "name": "rxdis",
   "version": "0.0.1",
   "description": "RxJS wrapper for redis",
   "main": "dist/index.js",
