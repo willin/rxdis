@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+import { Observable, pipe } from 'rxjs';
 import { EventEmitter } from 'events';
 import { Readable } from 'stream';
 /* eslint-disable import/no-unresolved */
@@ -69,6 +69,11 @@ export type NodeRedisClient = NodeRedis.RedisClient;
 /**
  * Pipeline
  */
+export type Pipeline = IORedis.Pipeline;
+// export interface Pipeline extends IORedis.Pipeline {
+//   exec<T>(callback?: Callback<Array<[Error | null, T]>>): Observable<T[]>;
+//   exec<T>(): Observable<T[]>;
+// }
 // export interface Pipeline {
 //   append(key: KeyType, value: ValueType, callback?: Callback<number>): Pipeline;
 //   auth(password: string, callback?: Callback<string>): Pipeline;
@@ -356,11 +361,6 @@ export type NodeRedisClient = NodeRedis.RedisClient;
 //   zscore(key: KeyType, member: string, callback?: Callback<number>): Pipeline;
 //   zunionstore(destination: string, numkeys: number, key: KeyType, ...args: string[]): Pipeline;
 // }
-
-export interface Pipeline extends IORedis.Pipeline {
-  exec<T>(callback?: (err: Error | null, res: [Error | null, T][]) => void): Observable<T[]>;
-  exec<T>(): Observable<T[]>;
-}
 
 /**
  * Commands

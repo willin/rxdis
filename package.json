@@ -16,7 +16,7 @@
   "peerDependencies": {
     "ioredis": "^4.24.5",
     "redis": "^3.0.2",
-    "rxjs": "^7.0.0-beta.13"
+    "rxjs": "^7.0.0-beta.14"
   },
   "devDependencies": {
     "@types/ioredis": "^4.22.1",
