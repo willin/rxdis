@@ -1,6 +1,6 @@
 {
   "name": "rxdis",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "RxJS wrapper for redis",
   "main": "dist/index.js",
   "module": "src/index.ts",

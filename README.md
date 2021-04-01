@@ -15,7 +15,7 @@ npm install --save rxdis
 yarn add rxdis
 ```
 
-### IORedis Adapter
+## IORedis Adapter
 
 ```ts
 import { Rxdis } from 'rxdis';
@@ -31,7 +31,57 @@ rxdis
   .subscribe(console.log);
 ```
 
-### Node-Redis Adapter
+### Pipeline
+
+```ts
+import { Rxdis, Pipeline } from 'rxdis';
+import IORedis from 'ioredis';
+
+const redis = new IORedis();
+const rxdis = Rxdis(redis);
+
+const source$ = rxdis
+  .pipeline()
+  .set('test1', 'hello')
+  .set('test2', 'world')
+  // Nesscessary type transform
+  .get('test1') as Pipeline;
+
+source$.exec().subscribe({
+  next: console.log,
+  complete() {
+    rxdis.disconnect();
+  },
+  error: console.error
+});
+```
+
+### Multi
+
+```ts
+import { Rxdis, Pipeline } from 'rxdis';
+import IORedis from 'ioredis';
+
+const redis = new IORedis();
+const rxdis = Rxdis(redis);
+
+const source$ = rxdis
+  .multi()
+  .set('test1', 'hello')
+  .set('test2', 'world')
+  // Nesscessary type transform
+  .get('test1') as Pipeline; // Same with pipeline()
+
+source$.exec().subscribe({
+  next: console.log,
+  complete() {
+    rxdis.disconnect();
+  },
+  error: console.error
+});
+```
+
+## Node-Redis Adapter
 
 ```ts
 import { Rxdis } from 'rxdis';
@@ -234,8 +284,8 @@ Currently, you can use these:
 
 ## Roadmap
 
-- Add IORedis `pipeline` and `multi` support
-- Add Redis `multi` support
+- [x] Add IORedis `pipeline` and `multi` support
+- [ ] Add Redis `multi` support
 
 ## License
 
