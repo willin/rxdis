@@ -12,3 +12,4 @@ rules:
       json: 2
   no-shadow: 0
   no-underscore-dangle: 0
+  '@typescript-eslint/unbound-method': 0

@@ -1,78 +1,110 @@
-import { bindNodeCallback } from 'rxjs';
+import { bindNodeCallback, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { ClientType, getClientType } from './helper';
+import { IORedisClient, NodeRedisClient, RxdisForIORedis, RxdisForNodeRedis, Pipeline } from './interface';
 
-export function Rxdis(client) {
-  return new Proxy(
-    {
-      __client: client,
-      disconnect(): void {
-        client.disconnect();
-      },
-      pipeline() {
-        const p = client.pipeline();
-        const { exec } = p;
-        p.exec = function () {
-          return bindNodeCallback(exec.bind(p))
-            .apply(null, arguments)
-            .pipe(
-              map((xs) => {
-                // Map result from [[err, res], [err, res], ...] to [res, res, ...]
-                const err = [];
+export * from './interface';
+
+export function Rxdis(client: IORedisClient): RxdisForIORedis;
+export function Rxdis(client: NodeRedisClient): RxdisForNodeRedis;
+export function Rxdis(client: IORedisClient | NodeRedisClient): RxdisForIORedis | RxdisForNodeRedis {
+  const clientType = getClientType(client.constructor.name);
+
+  const source = {
+    __client: client,
+    disconnect(): void {
+      switch (clientType) {
+        case ClientType.IORedis: {
+          return (client as IORedisClient).disconnect();
+        }
+        case ClientType.NodeRedis: {
+          return (client as NodeRedisClient).end(true);
+        }
+        default: {
+          // Unknown
+          return undefined;
+        }
+      }
+    }
+  };
+
+  if (clientType === ClientType.IORedis) {
+    Object.assign(source, {
+      multi(): Pipeline {
+        const p = (source.__client as IORedisClient).multi();
+        const { exec: execFn } = p;
+        Object.assign(p, {
+          exec<T>(): Observable<T[]> {
+            // eslint-disable-next-line
+            const source$ = bindNodeCallback(execFn.bind(p)).apply(null, arguments) as Observable<[Error | null, T][]>;
+            return source$.pipe(
+              map((xs: [Error | null, T][]) => {
+                const errs = [];
                 let hasError = false;
-                const res = (xs as any).map((x, i) => {
-                  err[i] = x[0];
-                  if (x[0] != null && !hasError) hasError = true;
-                  return x[1];
+                const res = xs.map(([e, v]) => {
+                  errs.push(e);
+                  if (e != null && !hasError) hasError = true;
+                  return v;
                 });
-                if (hasError) throw err;
+                if (hasError) throw errs;
                 return res;
               })
             );
-        };
-        return p;
+          }
+        });
+        return p as Pipeline;
       },
-      multi() {
-        // IORedis
-        if (client.constructor.name === 'Redis') {
-          const p = client.multi();
-          const { exec } = p;
-          p.exec = function () {
-            return bindNodeCallback(exec.bind(p))
-              .apply(null, arguments)
-              .pipe(
-                map((xs) => {
-                  // Map result from [[err, res], [err, res], ...] to [res, res, ...]
-                  const err = [];
-                  let hasError = false;
-                  const res = (xs as any).map((x, i) => {
-                    err[i] = x[0];
-                    if (x[0] != null && !hasError) hasError = true;
-                    return x[1];
-                  });
-                  if (hasError) throw err;
-                  return res;
-                })
-              );
-          };
-          return p;
-        }
-        // clientconstructor.name === 'RedisClient'
-        // node_redis
-        const p = client.multi();
-        const { exec } = p;
-        p.exec = bindNodeCallback(exec.bind(p));
-        return p;
+      pipeline(): Pipeline {
+        const p = (source.__client as IORedisClient).pipeline();
+        const { exec: execFn } = p;
+        Object.assign(p, {
+          exec<T>(): Observable<T[]> {
+            // eslint-disable-next-line
+            const source$ = bindNodeCallback(execFn.bind(p)).apply(null, arguments) as Observable<[Error | null, T][]>;
+            return source$.pipe(
+              map((xs: [Error | null, T][]) => {
+                const errs = [];
+                let hasError = false;
+                const res = xs.map(([e, v]) => {
+                  errs.push(e);
+                  if (e != null && !hasError) hasError = true;
+                  return v;
+                });
+                if (hasError) throw errs;
+                return res;
+              })
+            );
+          }
+        });
+        return p as Pipeline;
       }
-    },
-    {
-      get(obj, property: string | symbol) {
-        if (Object.keys(obj).includes(property.toString())) {
-          return obj[property];
-        }
-        return bindNodeCallback(obj.__client[property].bind(obj.__client));
+    });
+  }
+  // else if (clientType === ClientType.NodeRedis) {
+  //   Object.assign(source, {
+  //     multi(): Multi {
+  //       const p = (source.__client as NodeRedisClient).multi();
+  //       const { exec: execFn } = p;
+  //       Object.assign(p, {
+  //         exec: bindNodeCallback(execFn.bind(p)) as <T>() => Observable<T[]>
+  //       });
+
+  //       return p as Multi;
+  //     }
+  //   });
+  // }
+
+  const handler = {
+    get(obj: RxdisForIORedis | RxdisForNodeRedis, property: string): any {
+      if (Object.keys(obj).includes(property)) {
+        return obj[property as keyof typeof obj];
       }
+      // eslint-disable-next-line
+      return bindNodeCallback(obj.__client[property].bind(obj.__client));
     }
-  );
+  };
+
+  return new Proxy(source, handler) as RxdisForIORedis | RxdisForNodeRedis;
 }
 
 export default Rxdis;
